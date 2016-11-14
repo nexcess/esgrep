@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+
+import time
+import argparse
+import sys, errno
+import yaml
+import elasticsearch
+import elasticsearch.helpers
+
+try:
+    config = yaml.load(file('/etc/esgrep/esgrep.yml', 'r'))
+except yaml.YAMLError as err:
+    print('Error in config file:', err)
+
+parser = argparse.ArgumentParser(prog='esgrep')
+parser.add_argument('-i', '--index', default='logstash-{0}'.format(time.strftime('%Y.%m.%d')),
+        help='index to search against. Supports wildcards (e.g., logstash-2016.11.01, logstash-2016.10.*, etc). ' +
+             'defaults to logstash-YYYY-MM-DD')
+parser.add_argument('query', default='*',
+        help='query to search elasticsearch for. See elasticsearch/kibana query string syntax for more info')
+args = parser.parse_args()
+
+query = { "query" : {
+              "query_string" : { 
+                  "query" : args.query,
+                  "analyze_wildcard" : "true"
+              }
+          },
+          "sort": [
+              "@timestamp"
+          ],
+          "fields" : ["*", "_source"]
+        }
+
+es = elasticsearch.Elasticsearch(hosts=config['es_nodes'])
+scroller = elasticsearch.helpers.scan(es, query, index=args.index, _source_include=["@timestamp", "message"], preserve_order=True)
+
+try:
+    for doc in scroller:
+        print('{0}: {1}'.format(doc["_source"]["@timestamp"], doc["_source"]["message"]))
+except IOError as err:
+    if err.errno == errno.EPIPE: sys.exit(0)
