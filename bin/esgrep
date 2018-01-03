@@ -5,6 +5,7 @@ import argparse
 import sys
 import errno
 import yaml
+import json
 import elasticsearch
 import elasticsearch.helpers
 
@@ -36,50 +37,74 @@ parser.add_argument('query',
                     )
 parser.add_argument('-j', '--json',
                     action='store_true',
-                    help='return output in json syntax'
+                    help='return all (_source) fields as json'
+                    )
+parser.add_argument('-ts', '--timestart',
+                    default=False,
+                    help='starting timestamp to filter query results by'
+                    )
+parser.add_argument('-te', '--timeend',
+                    default="now",
+                    help='ending timestamp to filter query results by'
+                    )
+parser.add_argument('--timefield',
+                    default="@timestamp",
+                    help='field used when applying a time range to a search ' +
+                         '(defaults to "@timestamp")'
+                    )
+parser.add_argument('-s', '--sort',
+                    default="@timestamp",
+                    help='comma separated list of fields to sort by ' +
+                         '(defaults to "@timestamp")'
+                    )
+parser.add_argument('-f', '--fields',
+                    default="*,_source",
+                    help='comma separated list of fields to search ' +
+                         '(defaults to "*,_source")'
                     )
 
 args = parser.parse_args()
 
-query = {"query": {
-            "query_string": {
-                "query": args.query,
-                "analyze_wildcard": "true"
-            }
-         },
-         "sort": [
-            "@timestamp"
-         ],
-         "fields": [
-            "*",
-            "_source"
-         ]
-         }
+time_range = {
+    args.timefield: {
+        "lte": args.timeend
+    }
+}
+if args.timestart:
+    time_range[args.timefield]['gte'] = args.timestart
+
+query = {
+    "query": {
+        "bool": {
+            "must": [
+                {
+                    "range": time_range,
+                },
+                {
+                    "query_string": {
+                        "query": args.query,
+                        "analyze_wildcard": "true"
+                    }
+                }
+            ]
+        }
+    },
+    "sort": args.sort.split(','),
+    "fields": args.fields.split(','),
+}
 
 es = elasticsearch.Elasticsearch(hosts=config['es_nodes'])
 scroller = elasticsearch.helpers.scan(
                 es,
                 query,
                 index=args.index,
-                _source_include=[
-                    "@timestamp",
-                    "host",
-                    "program",
-                    "message"
-                ],
                 preserve_order=True
             )
 
 try:
     for doc in scroller:
         if args.json:
-            msg = ('{{"timestamp": "{0}", "host": "{1}", "program":' +
-                   ' "{2}", "message": {3} }}').format(
-                    doc["_source"]["@timestamp"],
-                    doc["_source"]["host"],
-                    doc["_source"]["program"],
-                    doc["_source"]["message"]
-                   )
+            msg = json.dumps(doc["_source"])
         else:
             msg = '{0} {1} {2} {3}'.format(
                     doc["_source"]["@timestamp"],
