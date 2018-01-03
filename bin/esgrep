@@ -3,6 +3,7 @@
 import time
 import argparse
 import sys
+import os
 import errno
 import yaml
 import json
@@ -73,7 +74,7 @@ time_range = {
 if args.timestart:
     time_range[args.timefield]['gte'] = args.timestart
 
-query = {
+query_string_query = {
     "query": {
         "bool": {
             "must": [
@@ -92,6 +93,12 @@ query = {
     "sort": args.sort.split(','),
     "fields": args.fields.split(','),
 }
+
+if os.path.isfile(args.query):
+    with open(args.query) as file:
+        query = json.loads(file.read())
+else:
+    query = query_string_query
 
 es = elasticsearch.Elasticsearch(hosts=config['es_nodes'])
 scroller = elasticsearch.helpers.scan(
