@@ -19,14 +19,28 @@ esgrep has been tested on python 2.7.
 
 Usage
 -----
-    usage: esgrep [-h] [-i INDEX] query
+    usage: esgrep [-h] [-i INDEX] [-j] [-a] [-ts TIMESTART] [-te TIMEEND]
+                  [--timefield TIMEFIELD] [-s SORT] [-f FIELDS]
+                  query
 
 Options:
 --------
-    -h: show help message and exit
-    -i --index INDEX: index to search against. Supports wildcards (e.g., logstash-2016.11.01, logstash-2016.10.*, etc). defaults to logstash-YYYY-MM-DD
-    query: query to search elasticsearch for. See elasticsearch/kibana query string syntax for more info
-    
-Todo:
------
-Similar to Kibana, allow users to specify (in config/esgrep.yml) a list of indexes along with what field name to use as a timestamp for sorting documents. For now, this tool assuemes a field named "@timestamp" exists and has an Elasticsearch [Date](https://www.elastic.co/guide/en/elasticsearch/reference/current/date.html "Elasticsearch Date Type").
+      -h, --help            show this help message and exit
+      -i INDEX, --index INDEX
+                            index to search against. Supports wildcards (e.g.,
+                            logstash-2016.11.01, logstash-2016.10.*,etc). defaults
+                            to logstash-YYYY-MM-DD
+      -j, --json            return all (_source) fields as json
+      -a, --agg             return only aggregations from query
+      -ts TIMESTART, --timestart TIMESTART
+                            starting timestamp to filter query results by
+      -te TIMEEND, --timeend TIMEEND
+                            ending timestamp to filter query results by
+      --timefield TIMEFIELD
+                            field used when applying a time range to a search
+                            (defaults to "@timestamp")
+      -s SORT, --sort SORT  comma separated list of fields to sort by (defaults to
+                            "@timestamp")
+      -f FIELDS, --fields FIELDS
+                            comma separated list of fields to search (defaults to
+                            "*,_source")
