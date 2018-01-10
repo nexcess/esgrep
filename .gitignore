@@ -1,0 +1,4 @@
+rpmbuild/RPMS/*
+rpmbuild/SRPMS/*
+rpmbuild/SOURCES/*
+rpmbuild/SPECS/*

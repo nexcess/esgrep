@@ -1,4 +1,4 @@
 ---
 es_nodes:
 - localhost
-default_log: "logstash"
+default_index: logstash
