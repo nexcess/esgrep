@@ -15,18 +15,18 @@ try:
 except yaml.YAMLError as err:
     print('Error in config file:', err)
 
-if 'default_log' not in config:
-    config['default_log'] = 'logstash'
+if 'default_index' not in config:
+    config['default_index'] = 'logstash'
 
 parser = argparse.ArgumentParser(prog='esgrep')
 parser.add_argument('-i', '--index',
                     default='{0}-{1}'.format(
-                        config['default_log'],
+                        config['default_index'],
                         time.strftime('%Y.%m.%d')),
                     help=('index to search against. Supports wildcards' +
                           ' (e.g., {0}-2016.11.01, {0}-2016.10.*,' +
                           'etc). defaults to {0}-YYYY-MM-DD').format(
-                            config['default_log']
+                            config['default_index']
                           )
 
                     )
