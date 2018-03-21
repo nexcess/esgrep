@@ -26,8 +26,8 @@ parser.add_argument('-i', '--index',
                     help=('index to search against. Supports wildcards' +
                           ' (e.g., {0}-2016.11.01, {0}-2016.10.*,' +
                           'etc). defaults to {0}-YYYY-MM-DD').format(
-                            config['default_index']
-                          )
+                        config['default_index']
+                    )
 
                     )
 parser.add_argument('query',
@@ -78,12 +78,12 @@ args = parser.parse_args()
 def get_scroller(es, query, args):
     """ construct and return a scroller for a given query """
     return elasticsearch.helpers.scan(
-                    es,
-                    query,
-                    index=args.index,
-                    request_timeout=float(args.timeout),
-                    preserve_order=True
-                )
+        es,
+        query,
+        index=args.index,
+        request_timeout=float(args.timeout),
+        preserve_order=True
+    )
 
 
 def get_aggs(es, query, args):
@@ -147,15 +147,24 @@ else:
     try:
         for doc in scroller:
             if args.json:
-                msg = json.dumps(doc['_source'])
+                msg = doc['_source']
+                if 'cmdline' in msg:
+                    msg['cmdline'] = " ".join(msg['cmdline']).strip()
+                if 'message' in doc['_source']:
+                    try:
+                        msg['message'] = json.loads(doc['_source']['message'])
+                        if 'cmdline' in msg['message']:
+                            msg['message']['cmdline'] = " ".join(msg['message']['cmdline']).strip()
+                    except ValueError, e:
+                        pass
+                print json.dumps(msg)
             else:
-                msg = '{0} {1} {2} {3}'.format(
-                        doc['_source']['@timestamp'],
-                        doc['_source']['host'],
-                        doc['_source']['program'],
-                        doc['_source']['message']
-                       )
-            print(msg)
+                print '{0} {1} {2} {3}'.format(
+                    doc['_source']['@timestamp'],
+                    doc['_source']['host'],
+                    doc['_source']['program'],
+                    doc['_source']['message']
+                )
     except IOError as err:
         if err.errno == errno.EPIPE:
             sys.exit(0)
