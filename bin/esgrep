@@ -149,10 +149,9 @@ else:
             if args.json:
                 msg = json.dumps(doc['_source'])
             else:
-                msg = '{0} {1} {2} {3}'.format(
+                msg = '{0} {1} {2}'.format(
                         doc['_source']['@timestamp'],
                         doc['_source']['host'],
-                        doc['_source']['path'],
                         doc['_source']['message']
                        )
             print(msg)
