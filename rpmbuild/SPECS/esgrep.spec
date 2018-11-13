@@ -1,12 +1,12 @@
 Name:		esgrep
-Version:	1.3
+Version:	1.4
 Release:	0%{dist}
 Summary:	Tool for running Kibana style queries from the command line
 
 Group:		Applications/System
 License:	none
 URL:		N/A
-Source0:	esgrep-1.3-0.tar.gz
+Source0:	esgrep-1.4-0.tar.gz
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildArch:	noarch
 Requires: python, python-elasticsearch, PyYAML
@@ -39,6 +39,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Tue Nov 13 2018 Ted Wells <twells@nexcess.net> - 1.4
+- don't show program field by default
+- use request_timeout param instead of timeout
 * Mon Jan 15 2018 Ted Wells <twells@nexcess.net> - 1.3
 - add -t/--timeout flags
 * Thu Jan 04 2018 Ted Wells <twells@nexcess.net> - 1.2
