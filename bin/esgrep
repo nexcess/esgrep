@@ -90,7 +90,7 @@ def get_aggs(es, query, args):
     """ run a query and return only the queries aggregations """
     return es.search(index=args.index,
                      body=query,
-                     timeout=float(args.timeout),
+                     request_timeout=float(args.timeout),
                      filter_path=['aggregations'])
 
 
