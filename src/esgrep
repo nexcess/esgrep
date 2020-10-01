@@ -1,0 +1,188 @@
+#!/usr/bin/env python3.6
+import time
+import argparse
+import sys
+import os
+import errno
+import yaml
+import json
+import elasticsearch
+import elasticsearch.helpers
+from signal import signal, SIGINT, SIGPIPE, SIG_DFL
+
+def get_scroller(es, query, args):
+    """ construct and return a scroller for a given query """
+    return elasticsearch.helpers.scan(
+                    es,
+                    query,
+                    index=args.index,
+                    request_timeout=float(args.timeout),
+                    preserve_order=True
+                )
+
+def load_config(config_path):
+    with open(config_path, 'r') as file:
+        config = yaml.load(file, Loader=yaml.BaseLoader)
+    return config
+
+def dslQuery(es, args):
+    time_range = {
+        args.timefield: {
+            'lte': args.timeend
+        }
+    }
+    if args.timestart:
+        time_range[args.timefield]['gte'] = args.timestart
+    sort_fields = args.sort.split(',')
+
+    if args.reverse:
+        sorts = list(map(lambda field: { field: "desc"} , sort_fields))
+    else:
+        sorts = list(map(lambda field: { field: "asc"} , sort_fields))
+    if os.path.isfile(args.query):
+        with open(args.query) as file:
+            query = json.loads(file.read())
+    else:
+        query = {
+            'query': {
+                'bool': {
+                    'filter': [
+                        {
+                            'range': time_range,
+                        },
+                        {
+                            'query_string': {
+                                'query': args.query,
+                                'analyze_wildcard': 'true'
+                            }
+                        }
+                    ]
+                }
+            },
+            'sort': sorts,
+        }
+    scroller = get_scroller(es, query, args)
+    for doc in scroller:
+        if args.format == 'json':
+            msg = json.dumps(doc['_source'])
+        elif args.format == 'txt':
+            msg = '{0} {1} {2}'.format(
+                    doc['_source']['@timestamp'],
+                    doc['_source']['host']['name'],
+                    doc['_source']['message']
+                   )
+        print(msg)
+
+def dslAggQuery(es, args):
+    """ run a query and return only the queries aggregations """
+    if os.path.isfile(args.query):
+        with open(args.query) as file:
+            query = json.loads(file.read())
+    else:
+        query = args.query
+    return es.search(index=args.index,
+                     body=query,
+                     request_timeout=float(args.timeout),
+                     filter_path=['aggregations'])
+
+def sqlQuery(es, args):
+    """ run an SQL query and scroll/print the results """
+    if os.path.isfile(args.query):
+        with open(args.query) as file:
+            query = json.loads(file.read())
+    else:
+        query = {
+            'query': args.query
+        }
+    sql = elasticsearch.client.sql.SqlClient(es)
+    results = sql.query(body=query, params={'format': args.format}, request_timeout=args.timeout)
+    if args.format == 'txt':
+        print(results)
+    elif args.format == 'json':
+        print(json.dumps(results))
+
+if __name__ == '__main__':
+    signal(SIGINT, SIG_DFL)
+    signal(SIGPIPE, SIG_DFL)
+    global_config = load_config('/etc/esgrep/esgrep.yml')
+    if os.path.exists('./esgrep.yml'):
+        local_config = load_config('./esgrep.yml')
+    else:
+        local_config = {}
+    config = {**global_config, **local_config} 
+
+    parser = argparse.ArgumentParser(prog='esgrep')
+    parser.add_argument('-i', '--index',
+                        default='logstash-*',
+                        help=('index to search against. Supports wildcards' +
+                              ' (e.g., {0}-2016.11.01, {0}-2016.10.*,' +
+                              'etc). defaults to logstash-*')
+                        )
+    parser.add_argument('query',
+                        default='*',
+                        help=('query string query to pass to Elasticsearch, ' +
+                              'OR a file containing an Elasticsearch query ' +
+                              '(using the full Elasticsearch query DSL)')
+                        )
+    parser.add_argument('-t', '--timeout',
+                        default=30.0,
+                        help='how long to wait for a response from Elasticsearch (defaults to 30 seconds)'
+                        )
+    parser.add_argument('-f', '--format',
+                        default='json',
+                        help='format to return data in (json, txt)'
+                        )
+    parser.add_argument('-a', '--agg',
+                        action='store_true',
+                        help='return only aggregations from query'
+                        )
+    parser.add_argument('-S', '--sql',
+                        action='store_true',
+                        help='use SQL query syntax'
+                        )
+    parser.add_argument('-ts', '--timestart',
+                        default=False,
+                        help='starting timestamp to filter query results by'
+                        )
+    parser.add_argument('-te', '--timeend',
+                        default='now',
+                        help='ending timestamp to filter query results by'
+                        )
+    parser.add_argument('--timefield',
+                        default='@timestamp',
+                        help='field used when applying a time range to a search ' +
+                             '(defaults to "@timestamp")'
+                        )
+    parser.add_argument('-s', '--sort',
+                        default='@timestamp',
+                        help='comma separated list of fields to sort by ' +
+                             '(defaults to "@timestamp"). Order is' +
+                             'ascending by default.'
+                        )
+    parser.add_argument('-r', '--reverse',
+                        action='store_true',
+                        help='sort any fields passed to -s / --sort'
+                             'descending instead of the default of ascending'
+                        )
+    parser.add_argument('-F', '--fields',
+                        default='*,_source',
+                        help='comma separated list of fields to search ' +
+                             '(defaults to "*,_source")'
+                        )
+    args = parser.parse_args()
+
+
+
+    es = elasticsearch.Elasticsearch(
+        hosts=config['es_nodes'],
+        http_auth=(config['username'], config['password']),
+    )
+
+    if args.sql:
+        sqlQuery(es, args)
+    if args.agg:
+        result = dslAggQuery(es, args)
+        agg_json = json.dumps(result['aggregations'])
+        print(agg_json)
+    else:
+        dslQuery(es, args)
