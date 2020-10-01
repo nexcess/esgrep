@@ -156,7 +156,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--sort',
                         default='@timestamp',
                         help='comma separated list of fields to sort by ' +
-                             '(defaults to "@timestamp"). Order is' +
+                             '(defaults to "@timestamp"). Order is ' +
                              'ascending by default.'
                         )
     parser.add_argument('-r', '--reverse',

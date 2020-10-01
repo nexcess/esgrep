@@ -19,19 +19,33 @@ esgrep has been tested on python 2.7.
 
 Usage
 -----
-    usage: esgrep [-h] [-i INDEX] [-j] [-a] [-ts TIMESTART] [-te TIMEEND]
-                  [--timefield TIMEFIELD] [-s SORT] [-f FIELDS]
+
+    usage: esgrep [-h] [-i INDEX] [-t TIMEOUT] [-f FORMAT] [-a] [-S]
+                  [-ts TIMESTART] [-te TIMEEND] [--timefield TIMEFIELD] [-s SORT]
+                  [-r] [-F FIELDS]
                   query
 
 Options:
 --------
+
+    positional arguments:
+      query                 query string query to pass to Elasticsearch, OR a file
+                            containing an Elasticsearch query (using the full
+                            Elasticsearch query DSL)
+
+    optional arguments:
       -h, --help            show this help message and exit
       -i INDEX, --index INDEX
                             index to search against. Supports wildcards (e.g.,
-                            logstash-2016.11.01, logstash-2016.10.*,etc). defaults
-                            to logstash-YYYY-MM-DD
-      -j, --json            return all (_source) fields as json
+                            {0}-2016.11.01, {0}-2016.10.*,etc). defaults to
+                            logstash-*
+      -t TIMEOUT, --timeout TIMEOUT
+                            how long to wait for a response from Elasticsearch
+                            (defaults to 30 seconds)
+      -f FORMAT, --format FORMAT
+                            format to return data in (json, txt)
       -a, --agg             return only aggregations from query
+      -S, --sql             use SQL query syntax
       -ts TIMESTART, --timestart TIMESTART
                             starting timestamp to filter query results by
       -te TIMEEND, --timeend TIMEEND
@@ -40,7 +54,9 @@ Options:
                             field used when applying a time range to a search
                             (defaults to "@timestamp")
       -s SORT, --sort SORT  comma separated list of fields to sort by (defaults to
-                            "@timestamp")
-      -f FIELDS, --fields FIELDS
+                            "@timestamp"). Order is ascending by default.
+      -r, --reverse         sort any fields passed to -s / --sortdescending
+                            instead of the default of ascending
+      -F FIELDS, --fields FIELDS
                             comma separated list of fields to search (defaults to
                             "*,_source")
