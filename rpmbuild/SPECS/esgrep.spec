@@ -1,22 +1,25 @@
+%define esgrep_release 0
+%define esgrep_version 1.5
+
 Name:		esgrep
-Version:	1.4
-Release:	0%{dist}
+Version:	%{esgrep_version}
+Release:	%{esgrep_release}%{dist}
 Summary:	Tool for running Kibana style queries from the command line
 
 Group:		Applications/System
 License:	none
 URL:		N/A
-Source0:	esgrep-1.4-0.tar.gz
+Source0:	esgrep-%{esgrep_version}-%{esgrep_release}.tar.gz
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildArch:	noarch
-Requires: python, python-elasticsearch, PyYAML
+Requires: python3, PyYAML
 
 
 %description
 esgrep is a simple command line tool that aims to run Kibana like queries from the command line. While Kibana's Discover interface just uses the Query String Query, it also does some things like searching inside the _source field that this tool seeks to emulate. Queries may also be run using the full Elasticsearch DSL
 
 %prep
-%setup -q
+%setup -q -n %{name}-%{esgrep_version}-%{esgrep_release}
 
 
 %build
@@ -35,10 +38,16 @@ rm -rf %{buildroot}
 %files
 %defattr(-,root,root,-)
 /usr/local/bin/esgrep
-/etc/esgrep/esgrep.yml
+%config(noreplace) /etc/esgrep/esgrep.yml
 
 
 %changelog
+* Wed Jun 23 2021 Ted Wells <twells@nexcess.net> - 1.5-0
+- update Requires from python to python3
+- remove rpm dependency for python-elasticsearch
+- set timeout value to int
+- use %config(noreplace) for /etc/esgrep/esgrep.yml
+- include release version in setup macro (defaults to %{name}-%{version})
 * Tue Nov 13 2018 Ted Wells <twells@nexcess.net> - 1.4
 - don't show program field by default
 - use request_timeout param instead of timeout
