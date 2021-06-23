@@ -1,4 +1,5 @@
 ---
 es_nodes:
-- localhost
-default_index: logstash
+- http://localhost:9200
+username: changeme
+password: changeme

@@ -126,6 +126,7 @@ if __name__ == '__main__':
                         )
     parser.add_argument('-t', '--timeout',
                         default=30.0,
+                        type=int,
                         help='how long to wait for a response from Elasticsearch (defaults to 30 seconds)'
                         )
     parser.add_argument('-f', '--format',
