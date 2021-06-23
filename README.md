@@ -5,17 +5,20 @@ esgrep is a simple command line tool that aims to run Kibana like queries from t
 
 Installation
 ------------
-We'll offer .deb and .rpm packages soon(tm), but for now:
+An rpm is packaged with this release. To manually install:
 
-1.) Copy bin/esgrep to a folder in your $PATH
+1.) install the elasticsearch python library.
 
-2.) Copy config/esgrep.yml to /etc/esgrep/esgrep.yml and add your Elasticsearch server(s) to the es_nodes setting.
+2.) Copy bin/esgrep to a folder in your $PATH
 
-Dependencies
+3.) Copy config/esgrep.yml to /etc/esgrep/esgrep.yml and add your Elasticsearch server(s) and username/password used to authenticate to elasticsearch.
+
+Dependencies/tested versions
 ------------
-You'll need PyYAML and version => 5.0 of python-elasticsearch to run this.
+- python 3.6
+- PyYAML 3.10 - https://pypi.org/project/PyYAML/ (an rpm should be included in the base repo of most distros)
+- python-elasticsearch 7.9.1 - https://pypi.org/project/elasticsearch/
 
-esgrep has been tested on python 2.7.
 
 Usage
 -----
