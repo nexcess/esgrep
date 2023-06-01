@@ -1,5 +1,5 @@
 %define esgrep_release 0
-%define esgrep_version 1.5
+%define esgrep_version 1.6
 
 Name:		esgrep
 Version:	%{esgrep_version}
@@ -42,6 +42,8 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Thu Jun 1 2023 Teddy Wells <twells@nexcess.net> - 1.6-0
+- apply timeout when initiating global elasticsearch object
 * Wed Jun 23 2021 Ted Wells <twells@nexcess.net> - 1.5-0
 - update Requires from python to python3
 - remove rpm dependency for python-elasticsearch
