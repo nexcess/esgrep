@@ -95,7 +95,7 @@ def sqlQuery(es, args):
             'query': args.query
         }
     sql = elasticsearch.client.sql.SqlClient(es)
-    results = sql.query(body=query, params={'format': args.format}, request_timeout=args.timeout)
+    results = sql.query(body=query, params={'format': args.format}, request_timeout=float(args.timeout))
     if args.format == 'txt':
         print(results)
     elif args.format == 'json':
@@ -126,7 +126,6 @@ if __name__ == '__main__':
                         )
     parser.add_argument('-t', '--timeout',
                         default=30.0,
-                        type=int,
                         help='how long to wait for a response from Elasticsearch (defaults to 30 seconds)'
                         )
     parser.add_argument('-f', '--format',
@@ -177,6 +176,7 @@ if __name__ == '__main__':
     es = elasticsearch.Elasticsearch(
         hosts=config['es_nodes'],
         http_auth=(config['username'], config['password']),
+        timeout=float(args.timeout)
     )
 
     if args.sql:
