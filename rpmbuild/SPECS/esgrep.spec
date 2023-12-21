@@ -12,7 +12,7 @@ URL:		N/A
 Source0:	esgrep-%{esgrep_version}-%{esgrep_release}.tar.gz
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildArch:	noarch
-Requires: python3, PyYAML
+Requires: python3, python36-PyYAML
 
 
 %description
