@@ -26,23 +26,29 @@ def load_config(config_path):
     return config
 
 def dslQuery(es, args):
+    if not args.timeend:
+        time_end = 'now'
+    else:
+        time_end = args.timeend
     time_range = {
         args.timefield: {
-            'lte': args.timeend
+            'lte': time_end
         }
     }
     if args.timestart:
         time_range[args.timefield]['gte'] = args.timestart
     sort_fields = args.sort.split(',')
-
     if args.reverse:
         sorts = list(map(lambda field: { field: "desc"} , sort_fields))
     else:
         sorts = list(map(lambda field: { field: "asc"} , sort_fields))
+
     if os.path.isfile(args.query):
+        from_file = True
         with open(args.query) as file:
             query = json.loads(file.read())
     else:
+        from_file = False
         query = {
             'query': {
                 'bool': {
@@ -61,17 +67,28 @@ def dslQuery(es, args):
             },
             'sort': sorts,
         }
-    scroller = get_scroller(es, query, args)
-    for doc in scroller:
-        if args.format == 'json':
-            msg = json.dumps(doc['_source'])
-        elif args.format == 'txt':
-            msg = '{0} {1} {2}'.format(
-                    doc['_source']['@timestamp'],
-                    doc['_source']['host']['name'],
-                    doc['_source']['message']
-                   )
-        print(msg)
+    if args.count and not from_file:
+        query.pop('sort')
+        if not args.timestart and not args.timeend:
+            query['query']['bool']['filter'].pop(0)
+
+    if args.count:
+        result = es.count(body=query, index=args.index, request_timeout=float(args.timeout))
+        print(result['count'])
+    else:
+        scroller = get_scroller(es, query, args)
+        for doc in scroller:
+            if args.format == 'json' and not args.full_docs:
+                msg = json.dumps(doc['_source'])
+            elif args.format == 'json' and args.full_docs:
+                msg = json.dumps(doc)
+            elif args.format == 'txt':
+                msg = '{0} {1} {2}'.format(
+                        doc['_source']['@timestamp'],
+                        doc['_source']['host']['name'],
+                        doc['_source']['message']
+                       )
+            print(msg)
 
 def dslAggQuery(es, args):
     """ run a query and return only the queries aggregations """
@@ -125,7 +142,7 @@ if __name__ == '__main__':
                               '(using the full Elasticsearch query DSL)')
                         )
     parser.add_argument('-t', '--timeout',
-                        default=30.0,
+                        default=120.0,
                         help='how long to wait for a response from Elasticsearch (defaults to 30 seconds)'
                         )
     parser.add_argument('-f', '--format',
@@ -136,6 +153,10 @@ if __name__ == '__main__':
                         action='store_true',
                         help='return only aggregations from query'
                         )
+    parser.add_argument('-c', '--count',
+                        action='store_true',
+                        help='return only number of matches from query'
+                        )
     parser.add_argument('-S', '--sql',
                         action='store_true',
                         help='use SQL query syntax'
@@ -145,7 +166,7 @@ if __name__ == '__main__':
                         help='starting timestamp to filter query results by'
                         )
     parser.add_argument('-te', '--timeend',
-                        default='now',
+                        default=False,
                         help='ending timestamp to filter query results by'
                         )
     parser.add_argument('--timefield',
@@ -164,10 +185,10 @@ if __name__ == '__main__':
                         help='sort any fields passed to -s / --sort'
                              'descending instead of the default of ascending'
                         )
-    parser.add_argument('-F', '--fields',
-                        default='*,_source',
-                        help='comma separated list of fields to search ' +
-                             '(defaults to "*,_source")'
+    parser.add_argument('-F', '--full-docs',
+                        action='store_true',
+                        help='return full document of results instead of only the _source field.' +
+                             'this includes fields: like _index, _id, _score, etc'
                         )
     args = parser.parse_args()
 
