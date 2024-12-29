@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ -z "$@" ]; then
-    EL_RELEASES='7'
+    EL_RELEASES='7 9'
 else
     EL_RELEASES="$@"
 fi
@@ -20,11 +20,11 @@ mv ./esgrep-${VERSION}-${RELEASE}.tar.gz ./rpmbuild/SOURCES/
 
 
 for el_release in $EL_RELEASES; do
-    mock_config=esgrep-centos-${el_release}-x86_64
-    mock_dir=/home/mock/${mock_config}/result
+    mock_config=libmoose-el-${el_release}-x86_64
+    mock_dir=/var/lib/mock/${mock_config}/result
 
     echo "$(date) - building el${el_release} SRPM"
-    sudo mock -v -r ${mock_config} --buildsrpm --spec ./rpmbuild/SPECS/esgrep.spec --source ./rpmbuild/SOURCES/ &> ./rpmbuild/${mock_config}.srpm.log
+    sudo mock -v -r ./rpmbuild/mock/${mock_config}.cfg --buildsrpm --spec ./rpmbuild/SPECS/esgrep.spec --source ./rpmbuild/SOURCES/ &> ./rpmbuild/${mock_config}.srpm.log
     if [ -f "${mock_dir}/esgrep-${VERSION}-${RELEASE}.el${el_release}.src.rpm" ]; then
         echo "$(date) - copying el${el_release} SRPM"
         cp -v ${mock_dir}/esgrep-${VERSION}-${RELEASE}.el${el_release}.src.rpm ./rpmbuild/SRPMS/
@@ -34,7 +34,7 @@ for el_release in $EL_RELEASES; do
     fi
 
     echo "$(date) - building el${el_release} RPM"
-    sudo mock -v -r ${mock_config} ./rpmbuild/SRPMS/esgrep-${VERSION}-${RELEASE}.el${el_release}.src.rpm &> ./rpmbuild/${mock_config}.rpm.log
+    sudo mock -v -r ./rpmbuild/mock/${mock_config}.cfg ./rpmbuild/SRPMS/esgrep-${VERSION}-${RELEASE}.el${el_release}.src.rpm &> ./rpmbuild/${mock_config}.rpm.log
     if [ -f "${mock_dir}/esgrep-${VERSION}-${RELEASE}.el${el_release}.noarch.rpm" ]; then
         echo "$(date) - copying el${el_release} RPM"
         cp -v ${mock_dir}/esgrep-${VERSION}-${RELEASE}.el${el_release}.noarch.rpm ./rpmbuild/RPMS/
