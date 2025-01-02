@@ -1,4 +1,4 @@
-%define esgrep_release 0
+%define esgrep_release 1
 %define esgrep_version 1.7
 
 Name:		esgrep
@@ -44,6 +44,8 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Thu Jan 2 2024 Teddy Wells <twells@nexcess.net> - 1.7-1
+- update esgrep python shebang
 * Wed Jan 1 2024 Teddy Wells <twells@nexcess.net> - 1.7-0
 - refactor to use libmoose
 - add -c/--count, -n/--no-preserve-order flags
