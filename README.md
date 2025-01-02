@@ -17,7 +17,8 @@ Dependencies/tested versions
 ------------
 - python 3
 - PyYAML - https://pypi.org/project/PyYAML/ (an rpm should be included in the base repo of most distros)
-- python-elasticsearch 7.16.x - https://pypi.org/project/elasticsearch/
+- libmoose - (https://github.com/nexcess/libmoose)
+- python-elasticsearch 7.17.x - https://pypi.org/project/elasticsearch/
     - other versions may work, but have not been tested. 
     - this dependency is not handled in the provided esgrep RPM and will likely need to be installed via pip
 

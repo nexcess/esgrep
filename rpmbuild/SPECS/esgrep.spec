@@ -1,5 +1,5 @@
 %define esgrep_release 0
-%define esgrep_version 1.6
+%define esgrep_version 1.7
 
 Name:		esgrep
 Version:	%{esgrep_version}
@@ -12,7 +12,9 @@ URL:		N/A
 Source0:	esgrep-%{esgrep_version}-%{esgrep_release}.tar.gz
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildArch:	noarch
-Requires: python3, python36-PyYAML
+Requires: python3
+Requires: python3-PyYAML
+Requires: python3-libmoose
 
 
 %description
@@ -42,6 +44,10 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Wed Jan 1 2024 Teddy Wells <twells@nexcess.net> - 1.7-0
+- refactor to use libmoose
+- add -c/--count, -n/--no-preserve-order flags
+- replace unused -F/--fields flag with -F/--full-docs flag
 * Thu Jun 1 2023 Teddy Wells <twells@nexcess.net> - 1.6-0
 - apply timeout when initiating global elasticsearch object
 * Wed Jun 23 2021 Ted Wells <twells@nexcess.net> - 1.5-0
